@@ -5,3 +5,6 @@
 *.x
 *.o
 lib*.a
+
+# downloaded archive
+lbfgs_um.tar.gz
