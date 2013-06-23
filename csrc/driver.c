@@ -11,7 +11,7 @@ extern void lbfgs_();
 
 struct lbfgs_state
 {
-	int N, M, idiag, iflag;
+	int N, M, idiag, iflag, iprint0;
 	double eps, xtol;
 	double F, *G, *X, *W, *DIAG;
 };
@@ -51,7 +51,7 @@ double machine_epsilon()
 	return x;
 }
 
-state_t *initialize_solver(int N, int M, double eps, double *X0)
+state_t *initialize_solver(int iprint0, int N, int M, double eps, double *X0)
 {
 	size_t worksize = (size_t)(N) * (2 * M + 1) + 2 * M;
 	state_t *state;
@@ -59,6 +59,7 @@ state_t *initialize_solver(int N, int M, double eps, double *X0)
 		goto err0;
 	state->idiag = 0;
 	state->iflag = 0;
+	state->iprint0 = iprint0 - 1;
 	state->N = N;
 	state->M = M;
 	state->eps = eps;
@@ -92,7 +93,7 @@ void *finalize_solver(state_t *state)
 
 int iterate_solver(state_t *state)
 {
-	int iprint[] = {-1,0};
+	int iprint[] = {state->iprint0,0};
 	/*  SUBROUTINE LBFGS(N,M,X,F,G,DIAGCO,DIAG,IPRINT,EPS,XTOL,W,IFLAG) */
 	LBFGS(&state->N, &state->M, state->X, &state->F, state->G,
 	      &state->idiag, state->DIAG, iprint, &state->eps, &state->xtol, state->W,

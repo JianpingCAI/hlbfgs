@@ -34,6 +34,7 @@ data SolverConfig = SolverConfig CInt StateStructPtr deriving (Show)
 foreign import ccall "initialize_solver" initWrapper
   :: CInt
   -> CInt
+  -> CInt
   -> CDouble
   -> Ptr CDouble
   -> IO StateStructPtr
@@ -68,15 +69,18 @@ foreign import ccall "iterate_solver" iterLBFGS
 --------------------------------------------------------------------------------
 
 initializeSolver
-  :: CInt                     -- solution dimension @n@
+  :: Bool                     -- verbositiy @v@
+  -> CInt                     -- solution dimension @n@
   -> CInt                     -- memory dimension @m@
   -> CDouble                  -- tolerance @eps@
   -> Vec                      -- initial solution @x0@
   -> IO (Maybe SolverConfig)  -- returns: 'SolverConfig' on success
-initializeSolver n m eps x0 = S.unsafeWith x0 (initWrapper n m eps) >>= wrap
+initializeSolver v n m eps x0 =
+  S.unsafeWith x0 (initWrapper iv n m eps) >>= wrap
   where wrap p =  if p == nullPtr
                     then return Nothing
                     else return . Just $ SolverConfig n p
+        iv = if v then 1 else 0
 
 finalizeFailure
   :: SolverConfig
@@ -129,7 +133,8 @@ iterateSolver (SolverConfig _ p) = iterLBFGS p
 -- explicit conversions themself, but this is trivial with @fromIntegral@ and
 -- @realToFrac@.
 runSolver
-  :: CInt                       -- ^ solution dimension @n@
+  :: Bool                       -- ^ verbosity (@True@: per-iter, @False@: silent)
+  -> CInt                       -- ^ solution dimension @n@
   -> CInt                       -- ^ memory dimension @m@
   -> CInt                       -- ^ max number of iters @niter@
   -> CDouble                    -- ^ tolerance @eps@
@@ -137,7 +142,7 @@ runSolver
   -> (Vec -> CDouble)           -- ^ const function @f@
   -> (Vec -> Vec)               -- ^ gradient function @g@
   -> IO (Maybe (CInt,Bool,Vec)) -- ^ returns: iter count, converged, solution or @Nothing@
-runSolver n m niter eps x0 f g = initializeSolver n m eps x0 >>= run
+runSolver v n m niter eps x0 f g = initializeSolver v n m eps x0 >>= run
   where run Nothing     = return Nothing
         run (Just conf) =
           let iter it iflag x =

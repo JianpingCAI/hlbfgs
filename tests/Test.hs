@@ -89,7 +89,7 @@ testSuite = do
   x0 <- S.fromList `liftM` (replicateM (fromIntegral n) (randomRIO dom) :: IO [CDouble])
   let f = cost xs
       g = gradient xs
-  result <- runSolver n m nit ep x0 f g
+  result <- runSolver False n m nit ep x0 f g
   counts <- runTestTT $ TestList
     [ testFailure     "Test: init or solution error"  result
     , testConverged   "Test: convergence"             result
