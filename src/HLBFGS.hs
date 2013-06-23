@@ -75,22 +75,27 @@ initializeSolver
   -> IO (Maybe SolverConfig)  -- returns: 'SolverConfig' on success
 initializeSolver n m eps x0 = S.unsafeWith x0 (initWrapper n m eps) >>= wrap
   where wrap p =  if p == nullPtr
-                  then return Nothing
-                  else return . Just $ SolverConfig n p
+                    then return Nothing
+                    else return . Just $ SolverConfig n p
 
-finalizeSolverFailure
+finalizeFailure
   :: SolverConfig
-  -> IO ()
-finalizeSolverFailure (SolverConfig _ p) = finalizeWrapper p
+  -> IO (Maybe a)
+finalizeFailure (SolverConfig _ p) = finalizeWrapper p >> return Nothing
 
-finalizeSolverSuccess
-  :: SolverConfig
-  -> IO Vec
-finalizeSolverSuccess (SolverConfig n p) = do
-  xsoln <- getInternalSolutionVectorCopy p >>= newForeignPtr freeSolutionVectorCopy >>= wrap
+finalizeWithSolution
+  :: CInt
+  -> Bool
+  -> SolverConfig
+  -> IO (Maybe (CInt,Bool,Vec))
+finalizeWithSolution it converged (SolverConfig n p) = do
+  px <- getInternalSolutionVectorCopy p
   finalizeWrapper p
-  return xsoln
-  where wrap fp = return $ S.unsafeFromForeignPtr0 fp (fromIntegral n)
+  if px == nullPtr
+    then  return Nothing
+    else  newForeignPtr freeSolutionVectorCopy px >>= wrap >>=
+            \x -> return . Just $ (it,converged,x)
+      where wrap fp = return $ S.unsafeFromForeignPtr0 fp (fromIntegral n)
 
 getSolution
   :: SolverConfig
@@ -137,17 +142,13 @@ runSolver n m niter eps x0 f g = initializeSolver n m eps x0 >>= run
         run (Just conf) =
           let iter it iflag x =
                 case iflag of
-                  1 ->  if    it == niter
-                        then  return . Just $ (it,iflag == 0,x)
-                        else  do
+                  1 ->  if it == niter
+                          then finalizeWithSolution it False conf
+                          else do
                             updateSolverState conf (f x) (g x)
                             iflag' <- iterateSolver conf
                             xcurr  <- getSolution conf
                             iter (it+1) iflag' xcurr
-
-                  0 ->  do  xsoln <- finalizeSolverSuccess conf
-                            return . Just $ (it,True,xsoln)
-
-                  _ ->  do  finalizeSolverFailure conf
-                            return Nothing
+                  0 ->  finalizeWithSolution it True conf
+                  _ ->  finalizeFailure conf
           in  iter 0 1 x0
