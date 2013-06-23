@@ -1,15 +1,14 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# CFILES driver.c #-}
 
--- | Haskell interface for the L-BFGS algorithm of Nocedal
+-- | Haskell interface for the L-BFGS reference implementation of Nocedal
 module HLBFGS
 ( runSolver
 ) where
 
 import Foreign.C
 import Foreign.Ptr
-import Foreign.ForeignPtr hiding (unsafeForeignPtrToPtr)
-import Foreign.ForeignPtr.Unsafe (unsafeForeignPtrToPtr)
+import Foreign.ForeignPtr
 import qualified Data.Vector.Storable as S
 
 --------------------------------------------------------------------------------
@@ -19,8 +18,8 @@ import qualified Data.Vector.Storable as S
 -- Convenient type alias
 type Vec = S.Vector CDouble
 
--- Unit-like type representing foreign solver-state structure
-data StateStruct = StateStruct
+-- Constructor-less type representing foreign solver-state structure
+data StateStruct
 
 -- Convenient type alias for pointer to foreign structure
 type StateStructPtr = Ptr StateStruct
@@ -28,6 +27,9 @@ type StateStructPtr = Ptr StateStruct
 -- Data type for putting it all together
 data SolverConfig = SolverConfig CInt StateStructPtr deriving (Show)
 
+--------------------------------------------------------------------------------
+-- Interfaces for C-based wrapper calls ----------------------------------------
+--------------------------------------------------------------------------------
 
 foreign import ccall "initialize_solver" initWrapper
   :: CInt
@@ -117,16 +119,19 @@ iterateSolver (SolverConfig _ p) = iterLBFGS p
 -- | Minimize cost function @f@ w.r.t. @x@ using the L-BFGS algorithm
 --
 -- Returns @Nothing@ on initialization error (e.g. memory allocation) or
--- solution error.
+-- solution error (e.g. failure in line search). All @Int@ and @Double@
+-- arguments are actually @CInt@s and @CDouble@s - the user must handle the
+-- explicit conversions themself, but this is trivial with @fromIntegral@ and
+-- @realToFrac@.
 runSolver
-  :: CInt                   -- ^ solution dimension @n@
-  -> CInt                   -- ^ memory dimension @m@
-  -> CInt                   -- ^ max number of iters @niter@
-  -> CDouble                -- ^ tolerance @eps@
-  -> Vec                    -- ^ initial solution @x0@
-  -> (Vec -> CDouble)       -- ^ const function @f@
-  -> (Vec -> Vec)           -- ^ gradient function @g@
-  -> IO (Maybe (CInt, Bool, Vec)) -- ^ returns: iter count, converged, solution or @Nothing@
+  :: CInt                       -- ^ solution dimension @n@
+  -> CInt                       -- ^ memory dimension @m@
+  -> CInt                       -- ^ max number of iters @niter@
+  -> CDouble                    -- ^ tolerance @eps@
+  -> Vec                        -- ^ initial solution @x0@
+  -> (Vec -> CDouble)           -- ^ const function @f@
+  -> (Vec -> Vec)               -- ^ gradient function @g@
+  -> IO (Maybe (CInt,Bool,Vec)) -- ^ returns: iter count, converged, solution or @Nothing@
 runSolver n m niter eps x0 f g = initializeSolver n m eps x0 >>= run
   where run Nothing     = return Nothing
         run (Just conf) =
@@ -136,9 +141,9 @@ runSolver n m niter eps x0 f g = initializeSolver n m eps x0 >>= run
                         then  return . Just $ (it,iflag == 0,x)
                         else  do
                             updateSolverState conf (f x) (g x)
-                            iflag <- iterateSolver conf
-                            xcurr <- getSolution conf
-                            iter (it+1) iflag xcurr
+                            iflag' <- iterateSolver conf
+                            xcurr  <- getSolution conf
+                            iter (it+1) iflag' xcurr
 
                   0 ->  do  xsoln <- finalizeSolverSuccess conf
                             return . Just $ (it,True,xsoln)
