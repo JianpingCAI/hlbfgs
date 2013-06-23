@@ -92,7 +92,7 @@ void *finalize_solver(state_t *state)
 
 int iterate_solver(state_t *state)
 {
-	int iprint[] = {1,0};
+	int iprint[] = {-1,0};
 	/*  SUBROUTINE LBFGS(N,M,X,F,G,DIAGCO,DIAG,IPRINT,EPS,XTOL,W,IFLAG) */
 	LBFGS(&state->N, &state->M, state->X, &state->F, state->G,
 	      &state->idiag, state->DIAG, iprint, &state->eps, &state->xtol, state->W,
