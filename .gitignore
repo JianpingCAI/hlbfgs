@@ -8,3 +8,6 @@ lib*.a
 
 # downloaded archive
 lbfgs_um.tar.gz
+
+# haddock
+doc/

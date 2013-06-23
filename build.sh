@@ -11,5 +11,6 @@ mkdir obj
 
 gcc -O2 -c csrc/driver.c -o obj/driver.o
 ghc --make $HFLAGS $LIBS tests/Test.hs obj/driver.o -o Test.x
+haddock src/HLBFGS.hs -h -o doc
 
 rm -rf obj
