@@ -9,7 +9,7 @@ extern void lbfgs_();
 #define LBFGS lbfgs_
 #endif
 
-struct lbfgs_state 
+struct lbfgs_state
 {
 	int N, M, idiag, iflag;
 	double eps, xtol;
@@ -64,7 +64,7 @@ state_t *initialize_solver(int N, int M, double eps, double *X0)
 	state->eps = eps;
 	state->xtol = machine_epsilon();
 	if ((state->X = malloc(N * sizeof(double))) == NULL)
-		goto err1; 
+		goto err1;
 	if ((state->G = malloc(N * sizeof(double))) == NULL)
 		goto err2;
 	if ((state->W = malloc(worksize * sizeof(double))) == NULL)
@@ -95,7 +95,7 @@ int iterate_solver(state_t *state)
 	int iprint[] = {1,0};
 	/*  SUBROUTINE LBFGS(N,M,X,F,G,DIAGCO,DIAG,IPRINT,EPS,XTOL,W,IFLAG) */
 	LBFGS(&state->N, &state->M, state->X, &state->F, state->G,
-	      &state->idiag, state->DIAG, iprint, &state->eps, &state->xtol, state->W, 
+	      &state->idiag, state->DIAG, iprint, &state->eps, &state->xtol, state->W,
 	      &state->iflag);
 	return state->iflag;
 }
