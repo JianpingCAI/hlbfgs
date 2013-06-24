@@ -8,7 +8,7 @@ import Control.Monad (replicateM, liftM)
 import System.Exit
 import System.Random (randomRIO)
 
-import HLBFGS
+import Math.HLBFGS
 
 --------------------------------------------------------------------------------
 -- Test problem definition -----------------------------------------------------

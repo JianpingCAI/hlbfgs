@@ -2,7 +2,7 @@
 {-# CFILES driver.c #-}
 
 -- | Haskell interface for the L-BFGS reference implementation of Nocedal
-module HLBFGS
+module Math.HLBFGS
 ( runSolver
 ) where
 
