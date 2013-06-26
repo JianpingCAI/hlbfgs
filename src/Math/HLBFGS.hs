@@ -19,7 +19,7 @@ import qualified Data.Vector.Storable as S
 type Vec = S.Vector CDouble
 
 -- Constructor-less type representing foreign solver-state structure
-data StateStruct
+data StateStruct = StateStruct
 
 -- Convenient type alias for pointer to foreign structure
 type StateStructPtr = Ptr StateStruct
