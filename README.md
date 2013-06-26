@@ -1,4 +1,4 @@
-# Haskell interface for the reference L-BFGS implementation of J. Nocedal
+# Haskell interface for the reference implementation of L-BFGS
 
 A high-level interface to the L-BFGS reference implementation (Fortran), which
 is available from [here](http://users.eecs.northwestern.edu/~nocedal/lbfgs.html)
