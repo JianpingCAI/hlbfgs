@@ -4,16 +4,17 @@ A high-level interface to the L-BFGS reference implementation (Fortran), which
 is available from [here](http://users.eecs.northwestern.edu/~nocedal/lbfgs.html)
 and is distributed under a BSD license.
 
-# compilation
+# Compilation
 
-The package expects the L-BFGS reference code to be available as a library
-names, surprisingly enough, `lbfgs`. In the `flib/` subdirectory, there is a
-`Makefile` provided to do just that (download the reference implementation,
-compile it, and package it appropriately). If you this route, you will still
-need to supply the requisite library paths to cabal - possibly including that
-for `gfortran`.
+This package expects the L-BFGS reference code to be available as a library
+named, imaginatively, `lbfgs`. In the `flib/` subdirectory, a `Makefile` is
+provided to do just that (attempt to download the reference implementation
+linked to above, compile it using `gfortran`, and package it appropriately). 
+Regardless of whether you compile the latter your self, you will still need to
+supply the requisite library paths to cabal if they are not in the default
+search paths (possibly including that for `gfortran`, if needed).
 
-For example, after compiling the `lbfgs` library in `flib/` the homebrew
+For example, after compiling the `lbfgs` library in `flib/` with the homebrew
 version of `gfortran` on OS X, this process will likely look something like:
 
 	> cabal configure \
